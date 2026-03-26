@@ -33,14 +33,14 @@ server-health-monitor/
 
 ## 監視項目
 
-| 項目 | 取得方法 | デフォルト閾値 |
-|------|----------|---------------|
-| CPU 使用率 | `/proc/stat` | 80% |
-| メモリ使用率 | `/proc/meminfo` | 80% |
-| Swap 使用率 | `/proc/meminfo` | 50% |
-| ディスク使用率 | `df /` | 90% |
+| 項目             | 取得方法        | デフォルト閾値 |
+| ---------------- | --------------- | -------------- |
+| CPU 使用率       | `/proc/stat`    | 80%            |
+| メモリ使用率     | `/proc/meminfo` | 80%            |
+| Swap 使用率      | `/proc/meminfo` | 50%            |
+| ディスク使用率   | `df /`          | 90%            |
 | ロードアベレージ | `/proc/loadavg` | CPU コア数 x 2 |
-| プロセス死活 | `pgrep -x` | - (設定時のみ) |
+| プロセス死活     | `pgrep -x`      | - (設定時のみ) |
 
 ## クイックスタート
 
@@ -96,21 +96,21 @@ bash /opt/health-monitor/scripts/status.sh
 `/opt/health-monitor/config.env` で以下を調整可能です。
 oneshot サービスのため、設定変更後の再起動は不要です（次回実行時から反映）。
 
-| 変数 | 説明 | デフォルト |
-|------|------|-----------|
-| `DISCORD_WEBHOOK_URL` | Discord Webhook URL（必須） | - |
-| `SERVER_NAME` | アラートに表示するサーバー名 | `$(hostname)` |
-| `CPU_THRESHOLD` | CPU アラート閾値 (%) | 80 |
-| `MEMORY_THRESHOLD` | メモリアラート閾値 (%) | 80 |
-| `SWAP_THRESHOLD` | Swap アラート閾値 (%) | 50 |
-| `DISK_THRESHOLD` | ディスクアラート閾値 (%) | 90 |
-| `LOAD_THRESHOLD_MULTIPLIER` | ロード閾値 = コア数 x この値 | 2 |
-| `WATCH_PROCESSES` | 死活監視するプロセス名（カンマ区切り） | - |
-| `LOG_RETENTION_DAYS` | ログ保持日数 | 30 |
-| `ALERT_COOLDOWN` | 同一アラート抑制秒数 | 300 |
-| `TOP_PROCESSES` | アラートに含むプロセス数 | 5 |
-| `HEARTBEAT_URL` | 外部死活監視の ping 先 URL（空で無効） | - |
-| `HEARTBEAT_METHOD` | `GET` または `POST` | `GET` |
+| 変数                        | 説明                                   | デフォルト    |
+| --------------------------- | -------------------------------------- | ------------- |
+| `DISCORD_WEBHOOK_URL`       | Discord Webhook URL（必須）            | -             |
+| `SERVER_NAME`               | アラートに表示するサーバー名           | `$(hostname)` |
+| `CPU_THRESHOLD`             | CPU アラート閾値 (%)                   | 80            |
+| `MEMORY_THRESHOLD`          | メモリアラート閾値 (%)                 | 80            |
+| `SWAP_THRESHOLD`            | Swap アラート閾値 (%)                  | 50            |
+| `DISK_THRESHOLD`            | ディスクアラート閾値 (%)               | 90            |
+| `LOAD_THRESHOLD_MULTIPLIER` | ロード閾値 = コア数 x この値           | 2             |
+| `WATCH_PROCESSES`           | 死活監視するプロセス名（カンマ区切り） | -             |
+| `LOG_RETENTION_DAYS`        | ログ保持日数                           | 30            |
+| `ALERT_COOLDOWN`            | 同一アラート抑制秒数                   | 300           |
+| `TOP_PROCESSES`             | アラートに含むプロセス数               | 5             |
+| `HEARTBEAT_URL`             | 外部死活監視の ping 先 URL（空で無効） | -             |
+| `HEARTBEAT_METHOD`          | `GET` または `POST`                    | `GET`         |
 
 ## 通知の仕組み
 
@@ -142,12 +142,12 @@ alert.sh は `Retry-After` ヘッダーを参照して最大5秒待機後に1回
 
 ## 詳細ドキュメント
 
-| ドキュメント | 内容 |
-|-------------|------|
-| [Discord Webhook セットアップ](docs/discord-webhook-setup.md) | Webhook の作成方法、通知テスト、通知の見え方 |
-| [ログフォーマット](docs/log-format.md) | TSV フィールド定義、解析用 awk ワンライナー集 |
-| [事後調査ガイド](docs/investigation-guide.md) | スパイク発生後の原因特定フロー（atop / sar の使い方） |
-| [トラブルシューティング](docs/troubleshooting.md) | 通知が来ない、timer が動かない等の対処法 |
+| ドキュメント                                                  | 内容                                                  |
+| ------------------------------------------------------------- | ----------------------------------------------------- |
+| [Discord Webhook セットアップ](docs/discord-webhook-setup.md) | Webhook の作成方法、通知テスト、通知の見え方          |
+| [ログフォーマット](docs/log-format.md)                        | TSV フィールド定義、解析用 awk ワンライナー集         |
+| [事後調査ガイド](docs/investigation-guide.md)                 | スパイク発生後の原因特定フロー（atop / sar の使い方） |
+| [トラブルシューティング](docs/troubleshooting.md)             | 通知が来ない、timer が動かない等の対処法              |
 
 ## 運用コマンド（サーバー上）
 
@@ -188,8 +188,8 @@ sudo bash uninstall.sh
 
 3つのモードを選択できます:
 
-| モード | 内容 |
-|--------|------|
-| **1) Stop only** | timer を停止。ファイル・ログはそのまま。再開も可能 |
-| **2) Uninstall** | health-monitor のファイルと systemd unit を削除。ログは保持 |
-| **3) Full cleanup** | atop・sysstat も含めて全て削除 |
+| モード              | 内容                                                        |
+| ------------------- | ----------------------------------------------------------- |
+| **1) Stop only**    | timer を停止。ファイル・ログはそのまま。再開も可能          |
+| **2) Uninstall**    | health-monitor のファイルと systemd unit を削除。ログは保持 |
+| **3) Full cleanup** | atop・sysstat も含めて全て削除                              |
