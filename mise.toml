@@ -1,2 +1,7 @@
-[task_config]
-dir = "{{config_root}}"
+[tasks.grant]
+description = 'mise/tasks/ のスクリプトに実行権限を与える'
+shell = 'bash -c'
+quiet = true
+run = '''
+chmod +x {{env.MISE_CONFIG_ROOT}}/mise/tasks/*.sh
+'''

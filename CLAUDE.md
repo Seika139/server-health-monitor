@@ -13,12 +13,13 @@ Ubuntu サーバーのヘルス監視ツール。1分間隔でメトリクスを
 
 - **Language**: Bash (POSIX-compatible features + bashisms allowed)
 - **Target OS**: Ubuntu 20.04+
-- **Task runner**: [mise](https://mise.jdx.dev/) with file-based tasks in `mise/tasks/*.sh`
+- **Task runner**: [mise](https://mise.jdx.dev/) with file-based tasks in `mise/tasks/*.sh`（ローカル開発専用、サーバーには mise を導入しない）
 - **Linters**: shellcheck, markdownlint-cli2, yamllint
 
 ## Development Commands
 
 ```bash
+mise run grant      # mise/tasks/*.sh に実行権限を付与（mise.toml 内のインラインタスク）
 mise run lint       # shellcheck + markdownlint + yamllint
 mise run format     # markdownlint --fix
 mise run validate   # config.env のバリデーション

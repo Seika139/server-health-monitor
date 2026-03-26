@@ -153,19 +153,19 @@ alert.sh は `Retry-After` ヘッダーを参照して最大5秒待機後に1回
 
 ```bash
 # 稼働状態の確認
-bash /opt/health-monitor/scripts/status.sh
+sudo bash /opt/health-monitor/scripts/status.sh
 
 # ログ解析レポート（当日）
-bash /opt/health-monitor/scripts/analyze.sh
+sudo bash /opt/health-monitor/scripts/analyze.sh
 
 # ログ解析レポート（日付指定）
-bash /opt/health-monitor/scripts/analyze.sh 2026-03-26
+sudo bash /opt/health-monitor/scripts/analyze.sh 2026-03-26
 
 # Discord 通知テスト
-bash /opt/health-monitor/scripts/test-alert.sh
+sudo bash /opt/health-monitor/scripts/test-alert.sh
 
 # 設定バリデーション
-bash /opt/health-monitor/scripts/validate-config.sh
+sudo bash /opt/health-monitor/scripts/validate-config.sh
 ```
 
 ## 開発コマンド（ローカル）
@@ -173,6 +173,7 @@ bash /opt/health-monitor/scripts/validate-config.sh
 [mise](https://mise.jdx.dev/) を使った開発用タスク:
 
 ```bash
+mise run grant      # mise/tasks/*.sh に実行権限を付与
 mise run lint       # shellcheck + markdownlint + yamllint
 mise run format     # markdownlint --fix
 mise run validate   # config.env のバリデーション
