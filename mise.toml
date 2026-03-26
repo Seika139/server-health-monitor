@@ -1,0 +1,2 @@
+[task_config]
+dir = "{{config_root}}"

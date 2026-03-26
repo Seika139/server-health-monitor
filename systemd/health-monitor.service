@@ -1,0 +1,16 @@
+[Unit]
+Description=Server Health Monitor - collect metrics and alert on anomalies
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/health-monitor/scripts/monitor.sh
+EnvironmentFile=/opt/health-monitor/config.env
+
+# Runs as root because /proc/stat, /proc/meminfo, and ps aux require it.
+# Hardening below limits the blast radius.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/health-monitor
+ProtectHome=true
+PrivateTmp=true

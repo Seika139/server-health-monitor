@@ -1,0 +1,12 @@
+node_modules/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# シークレット入り設定ファイルの誤コミット防止
+config.local.env
+*.local.env
+
+# ログ
+*.log

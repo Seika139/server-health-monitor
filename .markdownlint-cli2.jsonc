@@ -1,0 +1,17 @@
+{
+  "config": {
+    "default": true,
+    "MD009": {
+      "code_blocks": true,
+      "strict": true
+    },
+    "MD013": false,
+    "MD024": false,
+    "MD033": false,
+    "MD036": false,
+    "MD041": false,
+    "MD060": false
+  },
+  "gitignore": true,
+  "globs": ["**/*.md"]
+}
