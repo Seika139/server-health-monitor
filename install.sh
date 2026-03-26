@@ -11,6 +11,11 @@ LOG_DIR="/var/log/health-monitor"
 # ---------------------------------------------------------------------------
 # Pre-flight checks
 # ---------------------------------------------------------------------------
+if [[ "$(uname -s)" != "Linux" ]]; then
+    echo "ERROR: This script is intended for Linux (Ubuntu) only" >&2
+    exit 1
+fi
+
 if [[ $EUID -ne 0 ]]; then
     echo "ERROR: This script must be run as root (sudo bash install.sh)" >&2
     exit 1
