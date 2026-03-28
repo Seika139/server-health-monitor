@@ -18,7 +18,6 @@ import argparse
 import json
 import os
 import sys
-import time
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
@@ -36,10 +35,12 @@ PROJECTS_DIR = Path(
 CONTEXT_WINDOW = 200_000
 WARN_THRESHOLD = float(os.environ.get("ACP_MONITOR_WARN", "0.7"))
 DANGER_THRESHOLD = float(os.environ.get("ACP_MONITOR_DANGER", "0.85"))
-COOLDOWN_SECONDS = int(os.environ.get("ALERT_COOLDOWN", "300"))
 SERVER_NAME = os.environ.get("SERVER_NAME", "")
 
-COOLDOWN_DIR = Path("/var/log/health-monitor/.cooldown")
+ALERT_STATE_DIR = Path(
+    os.environ.get("ACP_MONITOR_STATE_DIR")
+    or str(Path.home() / ".local/state/acp-monitor")
+)
 
 COLOR_GREEN = 3066993
 COLOR_YELLOW = 15844367
@@ -176,27 +177,43 @@ def collect_session_data() -> list[dict]:
     return results
 
 
-# --- Cooldown ---
+# --- Alert state management ---
+# States: no file = normal, file content = "warn" or "danger"
+# Notifications fire only on state transitions:
+#   normal → warn, warn → danger, danger → warn, warn → normal, danger → normal
 
 
-def check_cooldown(alert_key: str) -> bool:
-    """True if alert should be suppressed."""
-    cooldown_file = COOLDOWN_DIR / f"acp_{alert_key}"
-    if not cooldown_file.exists():
-        return False
+def get_alert_state(alert_key: str) -> str:
+    """Get the current persisted alert state. Returns 'normal', 'warn', or 'danger'."""
+    state_file = ALERT_STATE_DIR / f"acp_{alert_key}"
+    if not state_file.exists():
+        return "normal"
     try:
-        last_alert = int(cooldown_file.read_text().strip())
-        return (int(time.time()) - last_alert) < COOLDOWN_SECONDS
-    except (ValueError, OSError):
-        return False
+        return state_file.read_text().strip() or "normal"
+    except OSError:
+        return "normal"
 
 
-def record_cooldown(alert_key: str):
+def set_alert_state(alert_key: str, state: str):
+    """Persist alert state. 'normal' removes the file."""
     try:
-        COOLDOWN_DIR.mkdir(parents=True, exist_ok=True)
-        (COOLDOWN_DIR / f"acp_{alert_key}").write_text(str(int(time.time())))
+        ALERT_STATE_DIR.mkdir(parents=True, exist_ok=True)
+        state_file = ALERT_STATE_DIR / f"acp_{alert_key}"
+        if state == "normal":
+            state_file.unlink(missing_ok=True)
+        else:
+            state_file.write_text(state)
     except OSError:
         pass
+
+
+def compute_level(ratio: float) -> str:
+    """Determine alert level from context ratio."""
+    if ratio >= DANGER_THRESHOLD:
+        return "danger"
+    if ratio >= WARN_THRESHOLD:
+        return "warn"
+    return "normal"
 
 
 # --- Terminal output ---
@@ -274,45 +291,70 @@ def text_bar(ratio: float, width: int = 20) -> str:
 
 
 def send_discord_alert(webhook_url: str, entries: list[dict]):
-    alerts = [e for e in entries if e["ratio"] >= WARN_THRESHOLD]
-    if not alerts:
-        return
-
     server = SERVER_NAME or "(unknown)"
     embeds = []
 
-    for e in alerts:
+    for e in entries:
         alert_key = e["key"].split(":")[-1][:12]
-        if check_cooldown(alert_key):
+        current_level = compute_level(e["ratio"])
+        previous_level = get_alert_state(alert_key)
+
+        if current_level == previous_level:
             continue
 
         ratio = e["ratio"]
         tokens = e["last_context"]
-        if ratio >= DANGER_THRESHOLD:
-            color = COLOR_RED
-            level = "DANGER"
-        else:
-            color = COLOR_YELLOW
-            level = "WARNING"
 
-        desc_lines = [
-            f"**Context**: {text_bar(ratio)} {ratio:.0%} ({tokens:,} / {CONTEXT_WINDOW:,})",
-            f"**State**: {e['state']} | **Mode**: {e['mode']}",
-            f"**Turns**: {e['turns']} | **Output**: {e['total_output']:,} tokens",
-        ]
-        if e["last_assistant_msg"]:
-            summary = e["last_assistant_msg"].replace("\n", " ")[:150]
-            desc_lines.append(f"**Last**: {summary}")
+        if current_level == "normal":
+            # Recovery
+            color = COLOR_GREEN
+            title = f"[RECOVERED] {e['label']} - {server}"
+            desc_lines = [
+                f"**Context**: {text_bar(ratio)} {ratio:.0%} ({tokens:,} / {CONTEXT_WINDOW:,})",
+                "コンテキスト使用率が閾値を下回りました。",
+            ]
+        elif current_level == "danger":
+            color = COLOR_RED
+            title = f"[DANGER] {e['label']} - {server}"
+            desc_lines = [
+                f"**Context**: {text_bar(ratio)} {ratio:.0%} ({tokens:,} / {CONTEXT_WINDOW:,})",
+                f"**State**: {e['state']} | **Mode**: {e['mode']}",
+                f"**Turns**: {e['turns']} | **Output**: {e['total_output']:,} tokens",
+            ]
+            if e["last_assistant_msg"]:
+                summary = e["last_assistant_msg"].replace("\n", " ")[:150]
+                desc_lines.append(f"**Last**: {summary}")
+        else:
+            # warn (new alert or downgrade from danger)
+            color = COLOR_YELLOW
+            if previous_level == "danger":
+                title = f"[WARN] {e['label']} - {server}"
+                desc_lines = [
+                    f"**Context**: {text_bar(ratio)} {ratio:.0%} ({tokens:,} / {CONTEXT_WINDOW:,})",
+                    "DANGER から WARNING に改善しました。",
+                ]
+            else:
+                title = f"[WARNING] {e['label']} - {server}"
+                desc_lines = [
+                    f"**Context**: {text_bar(ratio)} {ratio:.0%} ({tokens:,} / {CONTEXT_WINDOW:,})",
+                    f"**State**: {e['state']} | **Mode**: {e['mode']}",
+                    f"**Turns**: {e['turns']} | **Output**: {e['total_output']:,} tokens",
+                ]
+                if e["last_assistant_msg"]:
+                    summary = e["last_assistant_msg"].replace("\n", " ")[:150]
+                    desc_lines.append(f"**Last**: {summary}")
 
         embeds.append(
             {
-                "title": f"[{level}] {e['label']} - {server}",
+                "title": title,
                 "description": "\n".join(desc_lines),
                 "color": color,
                 "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             }
         )
-        record_cooldown(alert_key)
+        # Update state after building embed (actual write after successful send)
+        e["_new_level"] = current_level
+        e["_alert_key"] = alert_key
 
     if not embeds:
         return
@@ -331,6 +373,10 @@ def send_discord_alert(webhook_url: str, entries: list[dict]):
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             if resp.status in (200, 204):
+                # Persist state only after successful send
+                for e in entries:
+                    if "_new_level" in e:
+                        set_alert_state(e["_alert_key"], e["_new_level"])
                 print(f"Discord alert sent ({len(embeds)} session(s))")
     except urllib.error.HTTPError as err:
         if err.code == 429:
