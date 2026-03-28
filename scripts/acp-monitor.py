@@ -25,16 +25,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SESSIONS_DIR = Path(
-    os.environ.get(
-        "ACP_MONITOR_SESSIONS",
-        str(Path.home() / ".openclaw/agents/claude/sessions"),
-    )
+    os.environ.get("ACP_MONITOR_SESSIONS")
+    or str(Path.home() / ".openclaw/agents/claude/sessions")
 )
 PROJECTS_DIR = Path(
-    os.environ.get(
-        "ACP_MONITOR_PROJECTS",
-        str(Path.home() / ".claude/projects"),
-    )
+    os.environ.get("ACP_MONITOR_PROJECTS")
+    or str(Path.home() / ".claude/projects")
 )
 
 CONTEXT_WINDOW = 200_000

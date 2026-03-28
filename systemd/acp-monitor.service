@@ -5,6 +5,7 @@ After=network.target
 [Service]
 Type=oneshot
 User=openclaw-user
+Environment=HOME=/home/openclaw-user
 ExecStart=/opt/health-monitor/scripts/acp-monitor.sh --alert --quiet
 EnvironmentFile=/opt/health-monitor/config.env
 WorkingDirectory=/opt/health-monitor

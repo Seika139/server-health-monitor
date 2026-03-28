@@ -31,6 +31,7 @@ if ! command -v python3 &>/dev/null; then
 fi
 
 # Export variables needed by the Python script
+export HOME="${HOME:-/home/openclaw-user}"
 export DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
 export ACP_MONITOR_WARN="${ACP_MONITOR_WARN:-0.7}"
 export ACP_MONITOR_DANGER="${ACP_MONITOR_DANGER:-0.85}"
