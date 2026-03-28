@@ -22,10 +22,14 @@ server-health-monitor/
 │   ├── status.sh           # 稼働状態の確認
 │   ├── test-alert.sh       # Discord 通知テスト
 │   ├── analyze.sh          # ログ解析レポート
-│   └── validate-config.sh  # 設定値バリデーション
+│   ├── validate-config.sh  # 設定値バリデーション
+│   ├── acp-monitor.sh      # ACP セッション監視ラッパー
+│   └── acp-monitor.py      # ACP セッション監視本体
 ├── systemd/
 │   ├── health-monitor.service
-│   └── health-monitor.timer
+│   ├── health-monitor.timer
+│   ├── acp-monitor.service # ACP 監視用 (ProtectHome なし)
+│   └── acp-monitor.timer
 ├── mise/tasks/             # ローカル開発用タスク
 ├── tests/                  # bats-core ユニットテスト
 └── docs/                   # 詳細ドキュメント
@@ -41,6 +45,7 @@ server-health-monitor/
 | ディスク使用率   | `df /`          | 90%            |
 | ロードアベレージ | `/proc/loadavg` | CPU コア数 x 2 |
 | プロセス死活     | `pgrep -x`      | - (設定時のみ) |
+| ACP コンテキスト | sessions.json   | 70% (設定時のみ) |
 
 ## クイックスタート
 
@@ -111,6 +116,9 @@ oneshot サービスのため、設定変更後の再起動は不要です（次
 | `TOP_PROCESSES`             | アラートに含むプロセス数               | 5             |
 | `HEARTBEAT_URL`             | 外部死活監視の ping 先 URL（空で無効） | -             |
 | `HEARTBEAT_METHOD`          | `GET` または `POST`                    | `GET`         |
+| `ACP_MONITOR_ENABLED`       | ACP セッション監視の有効化             | `false`       |
+| `ACP_MONITOR_WARN`          | コンテキスト警告閾値 (0.0-1.0)         | 0.7           |
+| `ACP_MONITOR_DANGER`        | コンテキスト危険閾値 (0.0-1.0)         | 0.85          |
 
 ## 通知の仕組み
 

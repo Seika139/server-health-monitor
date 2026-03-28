@@ -51,11 +51,14 @@ echo "[2/7] Installing to $INSTALL_DIR..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p "$INSTALL_DIR/scripts"
-for script in monitor.sh alert.sh heartbeat.sh status.sh test-alert.sh analyze.sh validate-config.sh; do
+for script in monitor.sh alert.sh heartbeat.sh status.sh test-alert.sh analyze.sh validate-config.sh acp-monitor.sh; do
     if [[ -f "$SCRIPT_DIR/scripts/$script" ]]; then
         cp "$SCRIPT_DIR/scripts/$script" "$INSTALL_DIR/scripts/"
     fi
 done
+if [[ -f "$SCRIPT_DIR/scripts/acp-monitor.py" ]]; then
+    cp "$SCRIPT_DIR/scripts/acp-monitor.py" "$INSTALL_DIR/scripts/"
+fi
 chmod +x "$INSTALL_DIR/scripts/"*.sh
 cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/uninstall.sh"
 chmod +x "$INSTALL_DIR/uninstall.sh"
@@ -112,10 +115,21 @@ echo "  -> logrotate configured (rotate ${RETENTION} days)"
 echo "[5/7] Installing systemd timer..."
 cp "$SCRIPT_DIR/systemd/health-monitor.service" /etc/systemd/system/
 cp "$SCRIPT_DIR/systemd/health-monitor.timer"   /etc/systemd/system/
+cp "$SCRIPT_DIR/systemd/acp-monitor.service"    /etc/systemd/system/
+cp "$SCRIPT_DIR/systemd/acp-monitor.timer"      /etc/systemd/system/
 
 systemctl daemon-reload
 systemctl enable --now health-monitor.timer
 echo "  -> health-monitor.timer enabled and started"
+
+# shellcheck source=config.env
+source "$INSTALL_DIR/config.env"
+if [[ "${ACP_MONITOR_ENABLED:-false}" == "true" ]]; then
+    systemctl enable --now acp-monitor.timer
+    echo "  -> acp-monitor.timer enabled and started"
+else
+    echo "  -> acp-monitor.timer skipped (ACP_MONITOR_ENABLED=false)"
+fi
 
 # ---------------------------------------------------------------------------
 # 6. Verify

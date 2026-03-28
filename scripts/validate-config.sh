@@ -146,6 +146,28 @@ if [[ -n "${WATCH_PROCESSES:-}" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
+# ACP monitoring
+# ---------------------------------------------------------------------------
+if [[ "${ACP_MONITOR_ENABLED:-false}" == "true" ]]; then
+    if ! command -v python3 &>/dev/null; then
+        err "ACP_MONITOR_ENABLED=true but python3 is not installed"
+    else
+        ok "ACP_MONITOR_ENABLED=true (python3 found)"
+    fi
+
+    for var_name in ACP_MONITOR_WARN ACP_MONITOR_DANGER; do
+        val="${!var_name:-}"
+        if [[ -n "$val" ]]; then
+            if ! awk "BEGIN{exit !($val >= 0 && $val <= 1)}" 2>/dev/null; then
+                err "$var_name must be between 0.0 and 1.0 (got: '$val')"
+            else
+                ok "$var_name=$val"
+            fi
+        fi
+    done
+fi
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 echo ""
