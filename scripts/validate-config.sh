@@ -42,7 +42,7 @@ fi
 # ---------------------------------------------------------------------------
 # Threshold ranges (0-100)
 # ---------------------------------------------------------------------------
-for var_name in CPU_THRESHOLD MEMORY_THRESHOLD SWAP_THRESHOLD DISK_THRESHOLD; do
+for var_name in CPU_THRESHOLD MEMORY_THRESHOLD DISK_THRESHOLD; do
     val="${!var_name:-}"
     if [[ -z "$val" ]]; then
         err "$var_name is not set"
@@ -54,6 +54,16 @@ for var_name in CPU_THRESHOLD MEMORY_THRESHOLD SWAP_THRESHOLD DISK_THRESHOLD; do
         ok "$var_name=$val"
     fi
 done
+
+# SWAP_IO_THRESHOLD (pages/sec, 0 = disabled)
+val="${SWAP_IO_THRESHOLD:-}"
+if [[ -z "$val" ]]; then
+    err "SWAP_IO_THRESHOLD is not set"
+elif ! is_integer "$val"; then
+    err "SWAP_IO_THRESHOLD must be an integer (got: '$val')"
+else
+    ok "SWAP_IO_THRESHOLD=$val"
+fi
 
 # LOAD_THRESHOLD_MULTIPLIER (positive integer)
 val="${LOAD_THRESHOLD_MULTIPLIER:-}"

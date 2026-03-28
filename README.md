@@ -37,7 +37,7 @@ server-health-monitor/
 | ---------------- | --------------- | -------------- |
 | CPU 使用率       | `/proc/stat`    | 80%            |
 | メモリ使用率     | `/proc/meminfo` | 80%            |
-| Swap 使用率      | `/proc/meminfo` | 50%            |
+| Swap I/O レート  | `/proc/vmstat`  | 200 pg/s       |
 | ディスク使用率   | `df /`          | 90%            |
 | ロードアベレージ | `/proc/loadavg` | CPU コア数 x 2 |
 | プロセス死活     | `pgrep -x`      | - (設定時のみ) |
@@ -102,7 +102,7 @@ oneshot サービスのため、設定変更後の再起動は不要です（次
 | `SERVER_NAME`               | アラートに表示するサーバー名           | `$(hostname)` |
 | `CPU_THRESHOLD`             | CPU アラート閾値 (%)                   | 80            |
 | `MEMORY_THRESHOLD`          | メモリアラート閾値 (%)                 | 80            |
-| `SWAP_THRESHOLD`            | Swap アラート閾値 (%)                  | 50            |
+| `SWAP_IO_THRESHOLD`         | Swap I/O アラート閾値 (pg/s、0で無効)  | 200           |
 | `DISK_THRESHOLD`            | ディスクアラート閾値 (%)               | 90            |
 | `LOAD_THRESHOLD_MULTIPLIER` | ロード閾値 = コア数 x この値           | 2             |
 | `WATCH_PROCESSES`           | 死活監視するプロセス名（カンマ区切り） | -             |

@@ -31,9 +31,17 @@ LOG_FILE="$LOG_DIR/metrics-${DATE_TAG}.log"
 read_cpu_stat() {
     awk '/^cpu /{print $2+$3+$4+$5+$6+$7+$8, $5}' /proc/stat
 }
+
+# Swap I/O from /proc/vmstat (pswpin + pswpout = total swap page operations)
+read_swap_io() {
+    awk '/^pswpin/{i=$2} /^pswpout/{o=$2} END{print i+o}' /proc/vmstat
+}
+
 read -r total1 idle1 <<< "$(read_cpu_stat)"
+swap_io1=$(read_swap_io)
 sleep 1
 read -r total2 idle2 <<< "$(read_cpu_stat)"
+swap_io2=$(read_swap_io)
 cpu_delta=$(( total2 - total1 ))
 idle_delta=$(( idle2 - idle1 ))
 if (( cpu_delta > 0 )); then
@@ -58,11 +66,12 @@ fi
 read -r swap_total swap_free <<< "$(awk '/SwapTotal/{t=$2} /SwapFree/{f=$2} END{print t, f}' /proc/meminfo)"
 if (( swap_total > 0 )); then
     swap_usage=$(awk "BEGIN{printf \"%.1f\", (1 - $swap_free/$swap_total) * 100}")
-    swap_usage_int=${swap_usage%.*}
 else
     swap_usage="0.0"
-    swap_usage_int=0
 fi
+
+# Swap I/O rate (pages/sec)
+swap_io_rate=$(( swap_io2 - swap_io1 ))
 
 # Disk usage (root partition)
 disk_usage=$(df / | awk 'NR==2{print $5}' | tr -d '%')
@@ -75,8 +84,8 @@ load_threshold=$(awk "BEGIN{printf \"%.1f\", $cpu_cores * ${LOAD_THRESHOLD_MULTI
 # =============================================================================
 # Log metrics (TSV format for easy parsing)
 # =============================================================================
-printf '%s\tcpu=%s%%\tmem=%s%%\tswap=%s%%\tdisk=%s%%\tload=%s\tcores=%s\n' \
-    "$TIMESTAMP" "$cpu_usage" "$mem_usage" "$swap_usage" "$disk_usage" "$load_1m" "$cpu_cores" \
+printf '%s\tcpu=%s%%\tmem=%s%%\tswap=%s%%\tswap_io=%spg/s\tdisk=%s%%\tload=%s\tcores=%s\n' \
+    "$TIMESTAMP" "$cpu_usage" "$mem_usage" "$swap_usage" "$swap_io_rate" "$disk_usage" "$load_1m" "$cpu_cores" \
     >> "$LOG_FILE" 2>/dev/null || echo "WARNING: Failed to write to $LOG_FILE (disk full?)" >&2
 
 # Clean up old log files (date-based filenames are not handled by logrotate)
@@ -155,14 +164,14 @@ else
     check_recovery load "$load_1m" "$load_threshold"
 fi
 
-# Swap
-if (( swap_usage_int > ${SWAP_THRESHOLD:-50} )); then
+# Swap I/O (0 = disabled)
+if (( ${SWAP_IO_THRESHOLD:-200} > 0 && swap_io_rate > ${SWAP_IO_THRESHOLD:-200} )); then
     swap_total_h=$(awk "BEGIN{printf \"%.0f\", $swap_total/1024}")
     swap_used_h=$(awk "BEGIN{printf \"%.0f\", ($swap_total-$swap_free)/1024}")
-    details="Used: ${swap_used_h}MB / ${swap_total_h}MB (${swap_usage}%)"
-    fire_alert swap "${swap_usage}%" "${SWAP_THRESHOLD:-50}%" "$details"
-else
-    check_recovery swap "${swap_usage}%" "${SWAP_THRESHOLD:-50}%"
+    details="I/O: ${swap_io_rate} pg/s | Used: ${swap_used_h}MB / ${swap_total_h}MB (${swap_usage}%)"
+    fire_alert swap_io "${swap_io_rate}pg/s" "${SWAP_IO_THRESHOLD:-200}pg/s" "$details"
+elif (( ${SWAP_IO_THRESHOLD:-200} > 0 )); then
+    check_recovery swap_io "${swap_io_rate}pg/s" "${SWAP_IO_THRESHOLD:-200}pg/s"
 fi
 
 # =============================================================================

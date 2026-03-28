@@ -73,7 +73,7 @@ if $IS_RECOVERY; then
     case "$ALERT_TYPE" in
         cpu)        TITLE="CPU Recovered";;
         memory)     TITLE="Memory Recovered";;
-        swap)       TITLE="Swap Recovered";;
+        swap_io)    TITLE="Swap I/O Recovered";;
         disk)       TITLE="Disk Recovered";;
         load)       TITLE="Load Recovered";;
         process_*)  TITLE="Process Recovered: ${ALERT_TYPE#process_}";;
@@ -98,7 +98,7 @@ else
     case "$ALERT_TYPE" in
         cpu)        COLOR=16711680; TITLE="CPU Alert";;        # red
         memory)     COLOR=16744448; TITLE="Memory Alert";;     # orange
-        swap)       COLOR=16750848; TITLE="Swap Alert";;       # dark orange
+        swap_io)    COLOR=16750848; TITLE="Swap I/O Alert";;    # dark orange
         disk)       COLOR=16776960; TITLE="Disk Alert";;       # yellow
         load)       COLOR=10494192; TITLE="Load Alert";;       # purple
         process_*)  COLOR=3447003;  TITLE="Process Alert: ${ALERT_TYPE#process_}";; # blue

@@ -51,6 +51,7 @@ mise run deploy -- user@server
 - **クールダウン機構**: `/var/log/health-monitor/.cooldown/` にタイムスタンプファイルを置く方式。同一アラートの連続発火を抑制
 - **Recovery 通知**: `/var/log/health-monitor/.alert/` にアラート状態ファイルを置き、閾値を下回ったら復旧通知を送信して削除する状態マシン。alert.sh の exit code で送信成功を確認し、成功時のみ状態を記録・削除する
 - **Rate Limit 対策**: alert.sh で HTTP 429 を受けたら `Retry-After` ヘッダーを参照して最大5秒待機後に1回リトライ
+- **Swap は I/O レートで監視**: 使用率ではなく `/proc/vmstat` の `pswpin`/`pswpout` の差分（ページ/秒）で判定。使用率が高くてもアクセスがなければ問題ないため
 - **heartbeat は opt-in**: `HEARTBEAT_URL` が空なら何もしない設計
 - **install.sh の冪等性**: 再実行時に config.env を上書きせず、テンプレートとの差分（新規設定項目）を表示する
 

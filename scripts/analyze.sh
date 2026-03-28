@@ -41,13 +41,22 @@ awk -F'\t' '
     split($2, cpu_parts, "="); split(cpu_parts[2], cpu_val, "%");
     split($3, mem_parts, "="); split(mem_parts[2], mem_val, "%");
 
-    # Handle both old format (no swap) and new format (with swap)
+    # Handle format variations: old (no swap), with swap, with swap+swap_io
     if ($4 ~ /^swap=/) {
         split($4, swap_parts, "="); split(swap_parts[2], swap_val, "%");
-        split($5, disk_parts, "="); split(disk_parts[2], disk_val, "%");
-        split($6, load_parts, "=");
+        # Check for swap_io field
+        if ($5 ~ /^swap_io=/) {
+            split($5, sio_parts, "="); split(sio_parts[2], sio_val, "pg");
+            split($6, disk_parts, "="); split(disk_parts[2], disk_val, "%");
+            split($7, load_parts, "=");
+        } else {
+            sio_val[1] = -1;
+            split($5, disk_parts, "="); split(disk_parts[2], disk_val, "%");
+            split($6, load_parts, "=");
+        }
     } else {
         swap_val[1] = -1;
+        sio_val[1] = -1;
         split($4, disk_parts, "="); split(disk_parts[2], disk_val, "%");
         split($5, load_parts, "=");
     }
@@ -55,18 +64,21 @@ awk -F'\t' '
     cpu  = cpu_val[1] + 0;
     mem  = mem_val[1] + 0;
     swap = swap_val[1] + 0;
+    sio  = sio_val[1] + 0;
     disk = disk_val[1] + 0;
     load = load_parts[2] + 0;
 
     n++;
     cpu_sum  += cpu;  mem_sum  += mem;  disk_sum  += disk;  load_sum  += load;
     if (swap >= 0) { swap_sum += swap; swap_n++; }
+    if (sio >= 0) { sio_sum += sio; sio_n++; }
 
     if (n == 1 || cpu  > cpu_max)  { cpu_max  = cpu;  cpu_max_t  = $1; }
     if (n == 1 || mem  > mem_max)  { mem_max  = mem;  mem_max_t  = $1; }
     if (n == 1 || disk > disk_max) { disk_max = disk; disk_max_t = $1; }
     if (n == 1 || load > load_max) { load_max = load; load_max_t = $1; }
     if (swap >= 0 && (swap_n == 1 || swap > swap_max)) { swap_max = swap; swap_max_t = $1; }
+    if (sio >= 0 && (sio_n == 1 || sio > sio_max)) { sio_max = sio; sio_max_t = $1; }
 
     # Hourly aggregation
     split($1, dt, " ");
@@ -83,6 +95,9 @@ END {
     printf "  Memory: avg=%.1f%%  max=%.1f%% (%s)\n", mem_sum/n, mem_max, mem_max_t;
     if (swap_n > 0) {
         printf "  Swap:   avg=%.1f%%  max=%.1f%% (%s)\n", swap_sum/swap_n, swap_max, swap_max_t;
+    }
+    if (sio_n > 0) {
+        printf "  SwapIO: avg=%.0f pg/s  max=%.0f pg/s (%s)\n", sio_sum/sio_n, sio_max, sio_max_t;
     }
     printf "  Disk:   avg=%.1f%%  max=%.1f%% (%s)\n", disk_sum/n, disk_max, disk_max_t;
     printf "  Load:   avg=%.2f   max=%.2f  (%s)\n", load_sum/n, load_max, load_max_t;

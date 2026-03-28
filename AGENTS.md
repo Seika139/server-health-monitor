@@ -48,7 +48,7 @@ mise run lint     # 全 linter 実行
 ```text
 systemd timer (1分間隔)
   └── monitor.sh
-        ├── /proc/stat, /proc/meminfo, df, /proc/loadavg, pgrep
+        ├── /proc/stat, /proc/meminfo, /proc/vmstat, df, /proc/loadavg, pgrep
         │     → メトリクス収集
         ├── /var/log/health-monitor/metrics-YYYY-MM-DD.log
         │     → TSV 形式でログ記録
@@ -66,7 +66,7 @@ systemd timer (1分間隔)
 |------|--------|---------------|
 | CPU 使用率 | `/proc/stat`（1秒差分） | 80% |
 | メモリ使用率 | `/proc/meminfo` | 80% |
-| Swap 使用率 | `/proc/meminfo` | 50% |
+| Swap I/O レート | `/proc/vmstat`（1秒差分） | 200 pg/s |
 | ディスク使用率 | `df /` | 90% |
 | ロードアベレージ | `/proc/loadavg` | CPU コア数 x 2 |
 | プロセス死活 | `pgrep -x` | 設定時のみ |

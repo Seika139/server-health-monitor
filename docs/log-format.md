@@ -14,16 +14,17 @@ TSV（タブ区切り）形式で1分ごとに1行追記されます。
 | 2 | CPU 使用率 | `cpu=42.3%` | `/proc/stat` から1秒差分で算出 |
 | 3 | メモリ使用率 | `mem=65.1%` | `(Total - Available) / Total` |
 | 4 | Swap 使用率 | `swap=12.0%` | `(Total - Free) / Total` |
-| 5 | ディスク使用率 | `disk=72%` | ルートパーティション (`/`) |
-| 6 | ロードアベレージ | `load=1.25` | 1分間平均 |
-| 7 | CPU コア数 | `cores=4` | `nproc` の値 |
+| 5 | Swap I/O レート | `swap_io=150pg/s` | `/proc/vmstat` の `pswpin`+`pswpout` の1秒差分 |
+| 6 | ディスク使用率 | `disk=72%` | ルートパーティション (`/`) |
+| 7 | ロードアベレージ | `load=1.25` | 1分間平均 |
+| 8 | CPU コア数 | `cores=4` | `nproc` の値 |
 
 ### サンプル
 
 ```text
-2026-03-26 15:32:01  cpu=42.3%  mem=65.1%  swap=5.0%   disk=72%  load=1.25  cores=4
-2026-03-26 15:33:01  cpu=88.7%  mem=71.3%  swap=12.3%  disk=72%  load=3.41  cores=4
-2026-03-26 15:34:01  cpu=91.2%  mem=85.0%  swap=45.1%  disk=72%  load=5.12  cores=4
+2026-03-26 15:32:01  cpu=42.3%  mem=65.1%  swap=5.0%   swap_io=0pg/s    disk=72%  load=1.25  cores=4
+2026-03-26 15:33:01  cpu=88.7%  mem=71.3%  swap=12.3%  swap_io=85pg/s   disk=72%  load=3.41  cores=4
+2026-03-26 15:34:01  cpu=91.2%  mem=85.0%  swap=45.1%  swap_io=310pg/s  disk=72%  load=5.12  cores=4
 ```
 
 ### 解析ヘルパー
