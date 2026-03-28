@@ -6,14 +6,18 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="${CONFIG_FILE:-$SCRIPT_DIR/../config.env}"
 
-if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "ERROR: config.env not found at $CONFIG_FILE" >&2
-    exit 1
+# When run via systemd, EnvironmentFile provides config as env vars.
+# When run manually, source config.env directly.
+if [[ -z "${ACP_MONITOR_ENABLED:-}" ]]; then
+    CONFIG_FILE="${CONFIG_FILE:-$SCRIPT_DIR/../config.env}"
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        echo "ERROR: config.env not found at $CONFIG_FILE" >&2
+        exit 1
+    fi
+    # shellcheck source=../config.env
+    source "$CONFIG_FILE"
 fi
-# shellcheck source=../config.env
-source "$CONFIG_FILE"
 
 # Skip if ACP monitoring is disabled
 if [[ "${ACP_MONITOR_ENABLED:-false}" != "true" ]]; then
