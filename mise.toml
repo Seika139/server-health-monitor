@@ -1,3 +1,6 @@
+[settings]
+install_before = "7d"
+
 [tasks.grant]
 description = 'mise/tasks/ のスクリプトに実行権限を与える'
 shell = 'bash -c'
